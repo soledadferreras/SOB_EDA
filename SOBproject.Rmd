@@ -1,0 +1,624 @@
+---
+title: "SOB project"
+author: "Soledad Ferreras"
+date: "2024-01-12"
+output:
+  tufte::tufte_html: default
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
+link-citations: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r loading_packages, message= FALSE, warning= FALSE, echo=FALSE}
+library(readr)
+library(plotly)
+library(tidyverse)
+library(forcats)
+library(ggplot2)
+library(RColorBrewer)
+library(visdat)
+library(purrr)
+library(tufte) 
+library(patchwork)
+library(flextable)
+library(magrittr)
+library(knitr)
+
+
+```
+
+```{r echo=FALSE}
+file_SOB<-"C:\\Users\\chole\\Documents\\documentos personales\\educacion\\R\\Web scraping\\SOB\\SOB Yelp Review.csv"
+
+
+df_SOB <- read.csv(file_SOB)
+
+df_SOB <- df_SOB %>% 
+  mutate(rating_f = as.factor(rating))
+
+df_SOB <- df_SOB %>% 
+  mutate(Year=year(dates),
+         Month= month(dates))
+df_SOB <- df_SOB %>% 
+  mutate(WeekDay_f= as.factor(WeekDay))
+
+df_SOB$WeekDay_f <- factor(df_SOB$WeekDay_f, levels=c('lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'))
+df_SOB$WeekDay_f <- factor(df_SOB$WeekDay_f, levels = c("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"),
+                           labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+        
+```
+
+# <span style="color: #e62d19;">**Son of a Butcher, Yelp's customer review Analysis**</span>
+## **Introduction**
+::: {.fullwidth}
+Established in December 2020 and located in Dallas Texas (Lower Greenville), **Son of a Butcher** is a fast-food establishment specialized in hamburgers, that serves up elevated versions of traditional burger sliders, shakes, and fries. The restaurant uses organic Wagyu beef and they characterized by breading their own chicken sliders and making their own black bean patties in-house for vegetarian lovers.
+Public opinion plays a pivotal role in shaping the success of a restaurant, with platforms like Yelp, TripAdvisor or Google Maps acting as influential conduits for customer feedback. The impact of online reviews on potential diners cannot be overstated, as individuals often turn to these platforms to gauge the experiences of others before deciding where to dine. The collective sentiments expressed through customer reviews provide invaluable insights into the quality of service, food, and overall dining experience. Positive reviews not only attract new customers but also contribute to the establishment's positive reputation, fostering trust and loyalty. Conversely, negative reviews can dissuade potential patrons and have a lasting impact on the restaurant's image. In an era where online presence is integral to business success, understanding and managing public opinion is essential for restaurants to thrive and maintain a competitive edge in the dynamic culinary landscape.
+The primary objective of the present study, is to glean valuable insights into the overall public sentiment regarding the establishment known as 'Son of a Butcher', over time. In pursuit of this goal, data was extracted from the Yelp website dedicated to this restaurant <https://www.yelp.com/biz/son-of-a-butcher-dallas-3?sort_by=date_asc]>. The extraction process involved utilizing R code, can be found in the following link: <insert link here>. This approach aimed to gather pertinent details such as the restaurant's customer rating, customer comments, dates of reviews(from December 2020 till present date), if the reviews were considered either "useful", "cool" or "funny" by other Yelp's users and other insightful information.
+Comprehending public opinion holds paramount significance for both the restaurant and its audience. For the restaurant, insights derived from thorough analysis of customer reviews can serve as a compass for refining and enhancing its services. Identifying recurring themes in feedback, whether positive or negative, enables the establishment to pinpoint areas for improvement or capitalize on strengths. This self-awareness can contribute to the refinement of menu offerings, customer service protocols, and overall operational efficiency. On the other hand, for readers—whether potential customers or fellow business owners—the findings offer a valuable lens into the restaurant's strengths and weaknesses. Prospective diners can make informed decisions based on authentic customer experiences, while entrepreneurs in the food industry can draw inspiration from successful practices or learn from the challenges faced by the analyzed restaurant. In essence, understanding public opinion not only fosters the continual growth of the restaurant but also empowers readers with valuable insights for their own benefit.
+It is crucial to recognize and address the limitations and challenges inherent in this analysis to maintain transparency and credibility. Firstly, it's important to note that the data is derived exclusively from Yelp, which may introduce a platform-specific bias. Users on Yelp might not represent the entire spectrum of customer opinions, potentially leading to an incomplete portrayal of the restaurant's public perception. Furthermore, the nature of online reviews itself can introduce biases, as individuals with extremely positive or negative experiences may be more inclined to share their opinions. Additionally, factors such as the timing of the data collection and potential changes in the restaurant's management or offerings could influence the analysis outcomes. By openly acknowledging these limitations, we aim to provide a more accurate context for the findings, fostering a nuanced understanding of the public opinion landscape surrounding the restaurant. This transparency underscores our commitment to delivering an analysis that is not only insightful but also cognizant of its inherent constraints.
+
+**Structure of the Analysis:**
+
+The dataset, named "df_SOB," encompasses 13 variables pertinent to our analysis. These include "User names" representing customer names,  "rating" indicating the grade assigned by customers to the establishment on a scale of 1 to 5 stars, "Date" (month/day/year) which has been systematically divided into three distinct variables—namely "weekday," "month," and "year"—to facilitate more granular temporal insights. Similarly, the "location" variable, denoting the city and state, has been dissected into "state" for enhanced geographical analysis. The variable "comment" contains the textual content of customer reviews, offering qualitative insights into their experiences. Additionally, three variables—"Useful," "cool," and "funny"—capture quantitative measures representing the interactions of other customers with the reviews, indicating the perceived utility, coolness, or humor in the shared feedback. This comprehensive dataset forms the foundation for our in-depth exploration of the public opinion landscape surrounding the establishment.
+Provide a brief overview of how you plan to structure your exploratory data analysis. Mention the key sections or themes you will be exploring in the subsequent parts of your report.
+
+:::
+
+```{r, fig.margin = TRUE, fig.cap = "Figure 1. Rating mean over the years.", fig.width=3.5, fig.height=3.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+# df_SOB %>% 
+#   group_by(Year) %>% 
+#   summarize(Mean = mean(rating)) %>% 
+#   plot_ly(x=~ Year, y=~ Mean, color= ~Mean,
+#           hovertext= ~paste("Year: ", Year, "<br>",
+#                        "Stars: ", round(Mean, digits= 2), 
+#                        hoverinfo= "text")) %>% 
+#  add_bars(colors= "YlOrRd") %>% 
+#   layout(yaxis= list(title="Rating in Stars"),
+#          legend = list(title= list(text="Rating Stars")))
+
+df_SOB %>%
+    group_by(Year) %>%
+    summarize(Mean = mean(rating),
+              SD= sd(rating)) %>%
+    ggplot(aes(x= Year, y= Mean, fill= Mean)) +
+    geom_col() +
+    # geom_errorbar( aes(x=Year, ymin=Mean-SD, ymax=Mean+SD),
+    #                width=0.1, colour="gray", alpha=0.9, size=0.5) +
+    geom_text(aes(label = round(Mean, digits = 2),
+                  vjust = -0.5,
+                  nudge_x = -.15,
+                  fontsize = 0.25)) +
+    scale_fill_gradient(low = "#ffffb2", high = "#bd0026") +
+    ylim(0, 6) +
+    scale_y_continuous(breaks = c(0, 1, 2, 3, 4, 5))+
+    theme_minimal() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(y= "Rating (in Stars)", fill= "Rating (Stars)")
+
+
+```
+
+
+# **Exploratory Data Analysis**
+# **Temporal trends**
+
+ As highlighted in the introduction, the dataset under consideration spans from the restaurant's opening date in December 2020 to mid-January 2024, encapsulating a diverse range of perspectives. Nevertheless, for the present study reviews from year 2024, will be excluded due to limited available data.
+With a total of 328 customer reviews, the summary statistics (Table 1) provide insights over this timeframe, revealing a global mean rating of 4.235 and a median of 5 stars. A more nuanced exploration of the ratings over the years exposes, around a 10% decrease from the opening year 2020, compare to the following years (4.7 to 4.15 - 4.25) (Figure 1). However, it is essential to acknowledge the significant variation in the number of customer reviews from year to year (Table 2). It's noteworthy that for the year 2020, the dataset only captures data for the inaugural month of December, potentially skewing reviews to be more positive due to the novelty factor. Table 2 reveals that 2021 amassed the highest number of reviews (168), followed by a considerable decline in the subsequent years (83 and 53).
+ 
+ 
+```{r Summary Statistics, echo=FALSE} 
+   knitr::kable(df_SOB %>%
+    select(rating, useful, funny, cool, rating_f) %>%
+    summary())
+
+```
+<font size="3">**Table 1.** Rating mean over the years.</font>
+
+```{r, fig.margin=TRUE, fig.width=3.5, fig.height=2.5, cache=TRUE, echo=FALSE}
+knitr::opts_chunk$set(echo = FALSE, ft.align="left")
+knitr::kable(df_SOB %>% 
+  group_by(Year) %>% 
+  count(rating) %>% 
+  summarise(Total_reviews = sum(n)))
+```
+<font size="3">**Table 2.** Total customers reviews per year.</font>
+
+Examining the distribution of ratings over the years reveals a consistent pattern in the mid and lower star categories (1-3 stars), showing minimal fluctuation. The proportion of customers assigning 1, 2, and 3 stars remains relatively low across the years, with only 4-6% opting for 1 star, 0-5% for 2 stars, and 4-12% for 3 stars.
+
+Notably, data from the restaurant's opening year, limited to December, indicates a predominant 87% of customers rating the establishment with 5 stars. However, this trend experiences a substantial decline in subsequent years (2021, 2022, and 2023), with only 57%, 58%, and 49% of customers, respectively, awarding 5 stars. Conversely, the trend reverses for 4-star ratings: in 2020, a mere 4% of customers rated with 4 stars, gradually increasing to 21%, 24%, and 32% in 2021, 2022, and 2023. Taken together, these findings suggest a notable reduction in the percentage of customers awarding 5 stars throughout the analyzed period. Excluding the year 2020, this reduction becomes particularly prominent from 2022 (58% with 5 stars) to 2023 (49% with 5 stars), while 4-star ratings witness an increment from 24% to 32% over the same period.
+
+
+```{r figure2, fig.margin = TRUE, fig.width=4.5, fig.height=4.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+  
+p1 <- df_SOB %>% 
+  filter(Year != 2024) %>% 
+  group_by(Year) %>% 
+  count(rating_f) %>% 
+  mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+  plot_ly(x= ~Year, y= ~n, color = ~rating_f,
+          hoverinfo = "text",
+          text= ~paste("Counts: ", n, "<br>",
+                       "Year: ", Year, "<br>",
+                       "Star: ", rating_f),
+          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+            add_bars() %>% 
+            layout(barmode= "stack",
+                   plot_bgcolor= toRGB("gray92"),
+                   yaxis = list(title = "Counts")) 
+  
+p2 <- df_SOB %>% 
+  filter(Year != 2024) %>% 
+  group_by(Year) %>% 
+  count(rating_f) %>% 
+  mutate(proportions = n/sum(n),
+         rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+  plot_ly(x= ~Year, y= ~round(proportions, digits=2), color = ~rating_f, 
+          hoverinfo = "text",
+          text= ~paste("Prop: ", round(proportions, digits=4), "<br>",
+                       "Year: ", Year, "<br>",
+                       "Star: ", rating_f),
+          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+  add_bars() %>% 
+  layout(xaxis = list(title = "Year"),
+         yaxis = list(title = "Proportion"),
+         barmode = "stack",
+         plot_bgcolor= toRGB("gray92"))
+
+annotations = list( 
+
+  list( 
+    x = 0.2,  
+    y = 1.0,  
+    text = "a)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.8,  
+    y = 1,  
+    text = "b)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+ subplot(p1, p2) |> 
+layout(annotations = annotations,
+       showlegend= FALSE)
+
+```
+<font size="3">**Figure 2.** a) Rating Histogram and b) Rating distribution, over the years.</font>
+
+
+To uncover patterns in rating trends, the distribution of rating stars, both in terms of frequencies and proportions, was visualized across different months. Analyzing the aggregated data across all years, we observe that March, April, and December stand out as months with higher volumes of customer reviews (Figure 3a). The highest ratings tend to occur in the months of January, June, and December. Conversely, the lowest ratings are more frequent in the months of May, April, and June (Figure 3b).
+
+
+```{r figure3, fig.margin = TRUE, fig.width=4.5, fig.height=4.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+
+c3 <- df_SOB %>% 
+  filter(Year != 2024) %>% 
+  group_by(Month) %>% 
+  count(rating_f) %>% 
+  mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+  plot_ly(x= ~factor(Month), y= ~n, color = ~rating_f,
+          hoverinfo = "text",
+          text= ~paste("Counts: ", n, "<br>",
+                       "Month: ", Month, "<br>",
+                       "Star: ", rating_f),
+          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+            add_bars() %>% 
+            layout(barmode= "stack",
+                   plot_bgcolor= toRGB("gray92"),
+                   yaxis = list(title = "Counts")) 
+c4 <- df_SOB %>% 
+  filter(Year != 2024) %>% 
+  group_by(Month) %>% 
+  count(rating_f) %>% 
+  mutate(proportions = n/sum(n),
+         rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+  plot_ly(x= ~factor(Month), y= ~round(proportions, digits=3), color = ~rating_f, 
+          hoverinfo = "text",
+          text= ~paste("Prop: ", round(proportions, digits=4), "<br>",
+                       "Month: ", Month, "<br>",
+                       "Star: ", rating_f),
+          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+  add_bars() %>% 
+  layout(xaxis = list(title = "Month"),
+         yaxis = list(title = "Proportion"),
+         barmode = "stack",
+         plot_bgcolor= toRGB("gray92"))
+
+annotations2 = list( 
+  list( 
+    x = 0.2,  
+    y = 1.0,  
+    text = "a)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.8,  
+    y = 1,  
+    text = "b)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+subplot(c3, c4)|> 
+ layout(annotations = annotations2,
+        showlegend= FALSE)
+```
+
+
+<font size="3">**Figure 3.** a) Rating Histogram and b) Rating distribution, over Months.</font>
+
+A closer examination of individual years, as illustrated in Figure 4a, reveals a concentration of reviews in the last month of 2020 (December) and the first semester of 2021. In the subsequent two years (2022 and 2023), there is a noticeable decline in the number of customer reviews. However, the 2021 trend persists during the first semester.
+
+Customer proportions of 5 stars rating appear to be consistently higher during the months of January (75-100%) and from May to July (50-100%) across different years (Figure 4b). Ratings between 1 and 2 stars were never higher than 33.3%, and in several months, these rates were even nonexistent. This suggests an overall very good restaurant rating. It is noteworthy, however, that months with the lowest ratings (if we aggregate 1 and 2 stars) occur during the last year analyzed (2023) in the months of August(33%), January and November (25%).
+
+
+```{r figure4, fig.cap = "", message=FALSE, fig.fullwidth = TRUE, out.width="100%", echo=FALSE} 
+
+#FACET plot total review counts, showing ratings per years and Months
+p3 <- df_SOB %>% group_by(Year, Month) %>% 
+  filter(Year != 2024) %>% 
+  count(rating) %>% 
+  ggplot(aes(x= factor(Month), fill = factor(rating))) +
+  geom_bar(aes(weight = n), show.legend = FALSE) +
+  scale_fill_brewer(palette = "YlOrRd") +
+  facet_wrap(~Year) +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size = 8)) +
+  labs(y= "Total reviews", x= "Month") +
+  theme(strip.text = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(linetype = "solid",
+                                        color = "gray", linewidth = 1),
+         panel.background = element_rect(fill = 'gray92', color = 'gray'))
+#FACET plot rating distribution, showing ratings per years and Months
+p4 <- df_SOB %>% group_by(Year, Month) %>% 
+  filter(Year != 2024) %>% 
+  ggplot(aes(x= factor(Month), fill = factor(rating))) +
+  geom_bar(position= "fill") +
+  scale_fill_brewer(palette = "YlOrRd") +
+  facet_wrap(~Year) +
+  scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
+  theme_minimal() +
+  theme(
+        panel.grid.minor = element_blank(),
+        axis.text.x = element_text(size = 8),
+        strip.text = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(linetype = "solid",
+                                        color = "gray", linewidth = 1),
+          panel.background = element_rect(fill = 'gray92', color = 'gray')) +
+  scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
+  labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") 
+  
+
+annotationsF = list( 
+
+  list( 
+    x = -0.0001,  
+    y = 1.056,  
+    text = "a)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "left",
+    yanchor = "bottom",
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.509,  
+    y = 1.056,  
+    text = "b)",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "left",
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ))
+p33 <- ggplotly(p3)
+p44 <- ggplotly(p4)
+subplot(p33, p44)|>
+    layout(annotations = annotationsF,
+           showlegend=FALSE)
+```
+<font size="3">**Figure 4.** a) Rating Histogram per month and b) Rating distribution per month, over the years.</font>
+
+To investigate the potential influence of weekdays on customer ratings, an analysis of the frequency and proportion distribution was conducted. Figure 5a illustrates that Thursdays through Sundays experienced higher volumes of customer reviews. Although no specific weekday stands out for the highest occurrence of 5-star ratings, weekends and Mondays exhibit increased frequencies. Additionally, these days show a higher percentage of lower-star ratings when aggregated across the years 2020, 2021, 2022, and 2023 (Figure 5a and b).
+
+```{r figure5, message=FALSE, echo=FALSE}
+     
+#Weekdays frequencies
+
+   p.b <-df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(WeekDay_f) %>% 
+    count(rating_f) %>% 
+    mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+    plot_ly(x= ~WeekDay_f, y=~n, color =~rating_f, 
+          colors = c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
+    add_bars() %>% 
+    layout(xaxis = list(title = "Weekdays"),
+           yaxis = list(title = "Rating conts"),
+           plot_bgcolor= toRGB("gray92"))
+#Weekday proportions
+  p.c <- df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(WeekDay_f) %>% 
+    count(rating_f) %>% 
+    mutate(proportions = n/sum(n),
+           rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+    plot_ly(x= ~WeekDay_f, y=~round(proportions, digits=3), color =~rating_f,
+            colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
+    add_bars() %>% 
+    layout(xaxis = list(title = "Weekdays"),
+             yaxis = list(title = "Rating Proportion"),
+             barmode = "stack",
+           plot_bgcolor= toRGB("gray92"),
+  
+  annotations1 = list( 
+
+  list( 
+    x = -0.6,  
+    y = 1.0,  
+    text = "a) Total Rating reviews per weekday",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  ),  
+  list( 
+    x = 0.5,  
+    y = 1,  
+    text = "b) Rating Distribution per weekday",  
+    xref = "paper",  
+    yref = "paper",  
+    xanchor = "center",  
+    yanchor = "bottom",  
+    showarrow = FALSE 
+  )))
+
+  
+  fig5 <- subplot(p.b, p.c) |>
+    layout(annotations1 = annotations,
+           showlegend=FALSE)
+  fig5
+```
+<font size="3">**Figure 5.** a) Rating Histogram per weekday and b) Rating distribution per weekday.</font>
+
+Upon a yearly breakdown of the data, a consistent pattern emerges where more reviews are submitted during weekends. However, this trend is specifically notable for the years 2021 and 2022. In 2023, Thursdays and Fridays exhibited higher frequencies of customer ratings, as illustrated in figure 6. 
+Notably, in the year 2022, those same days (Thursdays and Fridays) experienced higher star ratings, with 50% of customers rating the establishment either with 5 or 4 stars. However, in the subsequent year, this proportion decreased to 20-33% (4 and 5 stars), while the proportion of 1-2 stars (combined) increased to 33-40% for these same days(Thursdays and Fridays). On the other hand, in 2023 the percentage of lower ratings decreased not only for weekends, but also for Mondays Tuesdays, compared to year 2022 (figure 6b). 
+
+
+```{r, figure6, message=FALSE, fig.fullwidth = TRUE, out.width="100%", echo=FALSE}
+# frequency histograms by weekdays facet by year
+  h1 <- df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(Year, WeekDay_f) %>%
+    count(rating_f) %>% 
+    ggplot(aes(x=WeekDay_f, y=n, fill= rating_f)) +
+    #geom_point()+
+    geom_col(position= "stack")+
+    scale_fill_brewer(palette = "YlOrRd") +
+    facet_wrap(~Year) +
+    theme_minimal() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    labs(y= "Review numbers", x= "Weekday", fill= "Rating") +
+    theme(strip.text = element_text(face = "bold", color = "black"),
+          strip.background = element_rect(linetype = "solid",
+                                          color = "gray", linewidth = 1),
+          panel.background = element_rect(fill = 'gray92', color = 'gray'))
+
+h2 <- df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(Year, WeekDay_f) %>%
+    count(rating_f) %>% 
+    ggplot(aes(x=WeekDay_f, fill= rating_f)) +
+    geom_bar(position= "fill")+
+    scale_fill_brewer(palette = "YlOrRd") +
+    facet_wrap(~Year) +
+    theme_minimal() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+    labs(y= "Rating distributions", x= "Weekday", fill= "Rating") +
+    theme(strip.text = element_text(face = "bold", color = "black"),
+          strip.background = element_rect(linetype = "solid",
+                                          color = "gray", linewidth = 1),
+          panel.background = element_rect(fill = 'gray92', color = 'gray'))
+
+
+h11 <- ggplotly(h1)
+h22 <- ggplotly(h2)
+subplot(h11, h22)|>
+    layout(showlegend=FALSE)
+
+```
+<font size="3">**Figure 6.** a) Rating Histogram per weekday and b) Rating proportion distribution per weekday.</font>
+
+::: {.fullwidth}
+**In summary**, the rating trend for the past year indicates a significant decline in 5-star ratings, dropping from 87% at its opening to 49%, resulting in a 15% decrease in customers giving a 5-star rating compared to 2022. Conversely, 4-star ratings increased by 33% compared to the previous year. Notably, the percentage of lower star ratings (1, 2, and 3) did not undergo significant changes over the recent years.
+
+To determine actionable steps for improving the overall rating trend, the focus will be on the last two years: 2022 and 2023. When examining the data by months, standout months in 2023 with excellent customer evaluations of 5 stars (ranging from 50% to 100% of customers) include June, October, March, December, and January. While all these months improved the rating compared to 2022, January witnessed a decrease in the percentage of 5-star ratings.
+
+In January, April, August, and November of 2023, there was a noticeable rise in the percentage of lower star ratings (1 and 2 stars). Particularly, April emerged as a month with high number of negative reviews in both years. In contrast, May, June, and September witnessed a significant improvement in customer ratings, with none of the clients providing a negative review.
+
+In 2023, Mondays and Tuesdays exhibited a noteworthy enhancement in customer ratings, with 50% of clients awarding either 4 or 5 stars, marking a significant increase from the previous year. Conversely, a reversal in this trend was observed for Thursdays and Fridays. Notably, these days see a higher frequency of customer reviews on Yelp, suggesting potential areas for improvement. Lastly, Saturdays and Sundays also displayed improvements compared to 2022.
+:::
+
+# **Sentiment Analysis**
+```{r, fig.margin = TRUE, fig.cap = "Figure 7. Sentiment Analysis Histogram.", fig.width=3.5, fig.height=3.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(vosonSML)
+library(SentimentAnalysis)
+library(SnowballC)
+library(ggpmisc)
+#Transform comment variable into a readable text format
+ df_SOB$comment <- enc2utf8(df_SOB$comment)
+#Run sentiment analysis
+SOBsentiment <- analyzeSentiment(df_SOB$comment) 
+#join SOBsentiment with df_SOB into one dataset
+
+full_df_SOB <- bind_cols(df_SOB, SOBsentiment)
+# Categorize sentiments into positive, neutral, and negative
+comment_sentiments <- full_df_SOB %>%
+  mutate(sentiment_category = case_when(
+    SentimentGI > 0 ~ "Positive",
+    SentimentGI == 0 ~ "Neutral",
+    SentimentGI < 0 ~ "Negative"
+  ))
+#Histogram
+
+comment_sentiments %>% 
+  ggplot(aes(x=SentimentGI, fill=sentiment_category ))+
+  geom_histogram()+
+  scale_fill_manual(values = c("Negative" = "#BF3626FF", "Neutral" = "#E9851DFF", "Positive" = "#165D43FF"))+
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank())
+```
+```{r fig.margin = TRUE, fig.cap = "Figure 8. Sentiment Analysis over the years.", fig.width=3.5, fig.height=3.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+comment_sentiments %>% 
+  ggplot(aes(x=Year, y=SentimentGI, color= sentiment_category ))+
+  geom_point(alpha= 0.8, position = "jitter", show.legend = FALSE) +
+  scale_color_manual(values = c("Negative" = "#BF3626FF", "Neutral" = "#E9851DFF", "Positive" = "#165D43FF")) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank())
+```
+To gain insights into customer sentiments expressed in Yelp comments, a sentiment analysis was conducted using the General Inquirer system developed by social psychologists at Harvard University, which relies on the Harvard IV Dictionary.
+
+In this initial analysis, each comment was assigned a sentiment score (SentimentGI). Negative scores denote negative sentiments, positive scores indicate positive sentiments, and values near zero represent neutral sentiments.
+
+Overall, the sentiment analysis suggests that the predominant sentiment expressed in the comments is positive, followed by a smaller fraction expressing negative sentiment, while the presence of neutral sentiment is negligible (see figure 7). This trend remains consistent across the years, as illustrated in figure 8. Specifically, there was a peak in customer posts in 2021, which gradually decreased in the following years.
+
+## **Are there specific keywords that frequently appear**
+## **in positive or negative reviews?**
+To explore specific keywords that commonly appear in positive or negative reviews, we analyzed the top 10 words associated with each sentiment category using the "loughran" lexicon. As previously demonstrated, positive sentiment prevails, with frequently occurring words such as 'good,' 'great,' and 'friendly.' This suggests that in addition to food quality, customers emphasize the importance of friendly service, a key aspect that undoubtedly contributes to remarkable ratings
+
+```{r figure9, message=FALSE, fig.fullwidth = TRUE, out.width="100%", warning=FALSE, echo=FALSE}
+library(tidytext)
+library(tidyverse)
+library(dplyr)
+library(tm)
+library(slam)
+library(NLP)
+# Sentiment analysis with tiidytext package using "loughran" lexicon
+loughran_word_counts <- df_SOB %>%
+  mutate(comment = str_to_lower(comment)) %>%
+  unnest_tokens(output = word, input= comment) %>% 
+  inner_join(get_sentiments("loughran")) %>% 
+  count(word, sentiment, sort= TRUE)
+#select top 10 words by snetiment
+loughran_top_10_words_by_sentiment <- loughran_word_counts %>% 
+  group_by(sentiment) %>% 
+  slice_max(order_by = n, n = 10) %>% 
+  ungroup() %>% 
+  mutate(word = reorder(word, n ))
+
+#bar plot showing contribution of words to sentiment
+f9<-loughran_top_10_words_by_sentiment %>% 
+  ggplot(aes(word, n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~sentiment, scales = "free_y") +
+  labs(y = "Contribution to sentiment", x = NULL) +
+  coord_flip() +
+  theme_minimal() +
+  theme(axis.title=element_text(size=8),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank())
+ggplotly(f9) %>% 
+  layout(showlegend=FALSE)
+```
+<font size="3">**Figure 9.** Top 10 words contribution to sentiment.</font>
+
+## **Users Interactions with Reviews**
+As described in the introduction, Yelp's website provides users with the option to engage with customer reviews by selecting one of three reactions: 'useful,' 'cool,' or 'funny.' To explore potential variations in user interaction based on review ratings, we plotted the counts of these interaction variables against the ratings. Figure 10 illustrates that while the majority of comments receive no user feedback, there appears to be a slight positive trend where user interaction increases with higher ratings, primarily through 'useful' and 'cool' reactions.
+
+When analyzing the relationship between comments' sentiment scores (SentimentGI) and user interactions (useful, cool, and funny), no discernible pattern emerged. This suggests that Yelp users do not exhibit any specific reaction patterns in response to the language used in reviews (data not shown). 
+    
+    
+```{r figure10, message=FALSE, warning=FALSE, echo=FALSE}
+long_SOB<- df_SOB %>% 
+  pivot_longer(cols = c("useful", "funny", "cool"), names_to = "interaction", 
+               values_to = "counts")
+long_SOB<-long_SOB %>% 
+  mutate(interaction= as.factor(interaction))
+int1<-long_SOB %>% 
+  ggplot(aes(x = rating_f, y= counts, color= interaction)) +
+  geom_point(position="jitter") +
+  scale_color_manual(values = c("useful" = "#BF3626FF", "funny" = "#F9C53BFF", "cool" = "#AEAC4CFF")) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(x = "rating (stars)", y = "frequency")
+ggplotly(int1)
+```
+<font size="3">**Figure 10.** Relationship between User Interactions with Customer Reviews and Ratings.</font>    
+    
+# **Geographical Analysis**    
+
+As previously noted, Son of a Butcher restaurant is situated in Texas, hence it's unsurprising that the majority of reviews originate from this state (out of the 328 posts, approximately 240 are from Texas). However, California and Florida emerge as the second and third most frequent states, respectively (see figure 11).
+
+To explore potential correlations between geographical location and average ratings, ratings were plotted against different locations. However, no significant pattern was observed (see figure 12).
+   
+    
+```{r figure11, message=FALSE, warning=FALSE, echo=FALSE}
+f11<- df_SOB %>%
+  ggplot(aes(y =  forcats::fct_rev(forcats::fct_infreq(State)))) +
+  geom_bar(fill="#165D43FF") +
+  # scale_discrete_manual()
+  xlab("counts") +
+  ylab("State") +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank())
+
+ggplotly(f11, tooltip = "text")
+```
+<font size="3">**Figure 11.** Customers reviews per State.</font>
+    
+```{r figure12, message=FALSE, warning=FALSE, echo=FALSE}
+f12<-df_SOB %>% 
+  ggplot(aes(x=rating, y= State, color= rating_f)) +
+  geom_point(position = "jitter") +
+  scale_color_brewer(palette = "YlOrRd") +
+  coord_flip() +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+panel.background = element_rect(fill = 'gray80'))
+ggplotly(f12) %>% 
+  layout(showlegend=FALSE)
+
+```
+<font size="3">**Figure 12.** Users interactions with customers reviews.</font>    
+
+
+    

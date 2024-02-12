@@ -208,65 +208,95 @@ layout(annotations = annotations,
 To uncover patterns in rating trends, the distribution of rating stars, both in terms of frequencies and proportions, was visualized across different months. Analyzing the aggregated data across all years, we observe that March, April, and December stand out as months with higher volumes of customer reviews (Figure 3a). The highest ratings tend to occur in the months of January, June, and December. Conversely, the lowest ratings are more frequent in the months of May, April, and June (Figure 3b).
 
 
-```{r figure3, fig.margin = TRUE, fig.width=4.5, fig.height=4.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+```{r figure3, message=FALSE, warning=FALSE, echo=FALSE}
 
-c3 <- df_SOB %>% 
-  filter(Year != 2024) %>% 
-  group_by(Month) %>% 
-  count(rating_f) %>% 
-  mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
-  plot_ly(x= ~factor(Month), y= ~n, color = ~rating_f,
-          hoverinfo = "text",
-          text= ~paste("Counts: ", n, "<br>",
-                       "Month: ", Month, "<br>",
-                       "Star: ", rating_f),
-          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
-            add_bars() %>% 
-            layout(barmode= "stack",
-                   plot_bgcolor= toRGB("gray92"),
-                   yaxis = list(title = "Counts")) 
-c4 <- df_SOB %>% 
-  filter(Year != 2024) %>% 
-  group_by(Month) %>% 
-  count(rating_f) %>% 
-  mutate(proportions = n/sum(n),
-         rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
-  plot_ly(x= ~factor(Month), y= ~round(proportions, digits=3), color = ~rating_f, 
-          hoverinfo = "text",
-          text= ~paste("Prop: ", round(proportions, digits=4), "<br>",
-                       "Month: ", Month, "<br>",
-                       "Star: ", rating_f),
-          colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
-  add_bars() %>% 
-  layout(xaxis = list(title = "Month"),
-         yaxis = list(title = "Proportion"),
-         barmode = "stack",
-         plot_bgcolor= toRGB("gray92"))
-
-annotations2 = list( 
-  list( 
-    x = 0.2,  
-    y = 1.0,  
-    text = "a)",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "center",  
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  ),  
-  list( 
-    x = 0.8,  
-    y = 1,  
-    text = "b)",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "center",  
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  ))
-subplot(c3, c4)|> 
- layout(annotations = annotations2,
-        showlegend= FALSE)
+# c3 <- df_SOB %>% 
+#   filter(Year != 2024) %>% 
+#   group_by(Month) %>% 
+#   count(rating_f) %>% 
+#   mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+#   plot_ly(x= ~factor(Month), y= ~n, color = ~rating_f,
+#           hoverinfo = "text",
+#           text= ~paste("Counts: ", n, "<br>",
+#                        "Month: ", Month, "<br>",
+#                        "Star: ", rating_f),
+#           colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+#             add_bars() %>% 
+#             layout(barmode= "stack",
+#                    plot_bgcolor= toRGB("gray92"),
+#                    yaxis = list(title = "Counts")) 
+# c4 <- df_SOB %>% 
+#   filter(Year != 2024) %>% 
+#   group_by(Month) %>% 
+#   count(rating_f) %>% 
+#   mutate(proportions = n/sum(n),
+#          rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+#   plot_ly(x= ~factor(Month), y= ~round(proportions, digits=3), color = ~rating_f, 
+#           hoverinfo = "text",
+#           text= ~paste("Prop: ", round(proportions, digits=4), "<br>",
+#                        "Month: ", Month, "<br>",
+#                        "Star: ", rating_f),
+#           colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>%
+#   add_bars() %>% 
+#   layout(xaxis = list(title = "Month"),
+#          yaxis = list(title = "Proportion"),
+#          barmode = "stack",
+#          plot_bgcolor= toRGB("gray92"))
+# 
+# annotations2 = list( 
+#   list( 
+#     x = 0.2,  
+#     y = 1.0,  
+#     text = "a)",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "center",  
+#     yanchor = "bottom",  
+#     showarrow = FALSE 
+#   ),  
+#   list( 
+#     x = 0.8,  
+#     y = 1,  
+#     text = "b)",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "center",  
+#     yanchor = "bottom",  
+#     showarrow = FALSE 
+#   ))
+# subplot(c3, c4)|> 
+#  layout(annotations = annotations2,
+#         showlegend= FALSE)
+f3a <-  df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(Month, rating_f) %>% 
+    count(rating_f) %>% 
+    summarize(total_reviews= sum(n)) %>% 
+    ggplot(aes(x = factor(Month), y = total_reviews, fill= rating_f)) +
+    geom_col() +
+    scale_fill_brewer(palette = "YlOrRd") +
+    theme_minimal() +
+    theme(legend.position="none",
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(y= "Reviews counts", x= "Month", fill= "Rating\n(Stars)")
+  f3b <-  df_SOB %>% group_by(Month) %>% 
+    filter(Year != 2024) %>% 
+    ggplot(aes(x= factor(Month), fill = factor(rating))) +
+    geom_bar(position= "fill") +
+    scale_fill_brewer(palette = "YlOrRd") +
+    scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
+    theme_minimal() +
+    theme(panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.text.x = element_text(size = 8)) +
+    scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
+    labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") +
+    theme(strip.text = element_text(face = "bold", color = "black"),
+          strip.background = element_rect(fill = "gray90", linetype = "solid",
+                                          color = "gray", linewidth = 1))
+  f3a+f3b  & plot_annotation(tag_levels = 'A')
+  
 ```
 
 
@@ -289,7 +319,8 @@ p3 <- df_SOB %>% group_by(Year, Month) %>%
   facet_wrap(~Year) +
   scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
   theme_minimal() +
-  theme(panel.grid.major.x = element_blank(),
+  theme(legend.position="none",
+        panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
         axis.text.x = element_text(size = 8)) +
   labs(y= "Total reviews", x= "Month") +
@@ -316,34 +347,34 @@ p4 <- df_SOB %>% group_by(Year, Month) %>%
   scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
   labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") 
   
-
-annotationsF = list( 
-
-  list( 
-    x = -0.0001,  
-    y = 1.056,  
-    text = "a)",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "left",
-    yanchor = "bottom",
-    showarrow = FALSE 
-  ),  
-  list( 
-    x = 0.509,  
-    y = 1.056,  
-    text = "b)",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "left",
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  ))
-p33 <- ggplotly(p3)
-p44 <- ggplotly(p4)
-subplot(p33, p44)|>
-    layout(annotations = annotationsF,
-           showlegend=FALSE)
+p3 + p4 & plot_annotation(tag_levels = 'A')
+# annotationsF = list( 
+# 
+#   list( 
+#     x = -0.0001,  
+#     y = 1.056,  
+#     text = "a)",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "left",
+#     yanchor = "bottom",
+#     showarrow = FALSE 
+#   ),  
+#   list( 
+#     x = 0.509,  
+#     y = 1.056,  
+#     text = "b)",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "left",
+#     yanchor = "bottom",  
+#     showarrow = FALSE 
+#   ))
+# p33 <- ggplotly(p3)
+# p44 <- ggplotly(p4)
+# subplot(p33, p44)|>
+#     layout(annotations = annotationsF,
+#            showlegend=FALSE)
 ```
 <font size="3">**Figure 4.** a) Rating Histogram per month and b) Rating distribution per month, over the years.</font>
 
@@ -352,61 +383,91 @@ To investigate the potential influence of weekdays on customer ratings, an analy
 ```{r figure5, message=FALSE, echo=FALSE}
      
 #Weekdays frequencies
-
-   p.b <-df_SOB %>%
+f5a<- df_SOB %>%
     filter(Year != 2024) %>% 
-    group_by(WeekDay_f) %>% 
+    group_by(WeekDay_f, rating_f) %>% 
     count(rating_f) %>% 
-    mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
-    plot_ly(x= ~WeekDay_f, y=~n, color =~rating_f, 
-          colors = c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
-    add_bars() %>% 
-    layout(xaxis = list(title = "Weekdays"),
-           yaxis = list(title = "Rating conts"),
-           plot_bgcolor= toRGB("gray92"))
-#Weekday proportions
-  p.c <- df_SOB %>%
-    filter(Year != 2024) %>% 
-    group_by(WeekDay_f) %>% 
-    count(rating_f) %>% 
-    mutate(proportions = n/sum(n),
-           rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
-    plot_ly(x= ~WeekDay_f, y=~round(proportions, digits=3), color =~rating_f,
-            colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
-    add_bars() %>% 
-    layout(xaxis = list(title = "Weekdays"),
-             yaxis = list(title = "Rating Proportion"),
-             barmode = "stack",
-           plot_bgcolor= toRGB("gray92"),
-  
-  annotations1 = list( 
+    summarize(total_reviews= sum(n)) %>% 
+    ggplot(aes(x = WeekDay_f, y = total_reviews, fill= rating_f)) +
+    geom_col() +
+    scale_fill_brewer(palette = "YlOrRd") +
+    theme_minimal() +
+    theme(legend.position="none",
+      panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(y= "Reviews counts", x= "Weekday")
 
-  list( 
-    x = -0.6,  
-    y = 1.0,  
-    text = "a) Total Rating reviews per weekday",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "center",  
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  ),  
-  list( 
-    x = 0.5,  
-    y = 1,  
-    text = "b) Rating Distribution per weekday",  
-    xref = "paper",  
-    yref = "paper",  
-    xanchor = "center",  
-    yanchor = "bottom",  
-    showarrow = FALSE 
-  )))
+ f5b<-df_SOB %>% filter(Year != 2024) %>%
+      group_by(WeekDay_f) %>% 
+      ggplot(aes(x= WeekDay_f, fill = factor(rating))) +
+      geom_bar(position= "fill") +
+      scale_fill_brewer(palette = "YlOrRd") +
+      scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
+      theme_minimal() +
+      theme(panel.grid.major.x = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(size = 8)) +
+      scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
+      labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") +
+      theme(strip.text = element_text(face = "bold", color = "black"),
+            strip.background = element_rect(fill = "gray90", linetype = "solid",
+                                            color = "gray", linewidth = 1))
+    f5a+f5b  & plot_annotation(tag_levels = 'A')
 
-  
-  fig5 <- subplot(p.b, p.c) |>
-    layout(annotations1 = annotations,
-           showlegend=FALSE)
-  fig5
+#    p.b <-df_SOB %>%
+#     filter(Year != 2024) %>% 
+#     group_by(WeekDay_f) %>% 
+#     count(rating_f) %>% 
+#     mutate(rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+#     plot_ly(x= ~WeekDay_f, y=~n, color =~rating_f, 
+#           colors = c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
+#     add_bars() %>% 
+#     layout(xaxis = list(title = "Weekdays"),
+#            yaxis = list(title = "Rating conts"),
+#            plot_bgcolor= toRGB("gray92"))
+# #Weekday proportions
+#   p.c <- df_SOB %>%
+#     filter(Year != 2024) %>% 
+#     group_by(WeekDay_f) %>% 
+#     count(rating_f) %>% 
+#     mutate(proportions = n/sum(n),
+#            rating_f = factor(rating_f, levels = c("5", "4", "3", "2", "1"))) %>% 
+#     plot_ly(x= ~WeekDay_f, y=~round(proportions, digits=3), color =~rating_f,
+#             colors =  c("#bd0026", "#f03b20", "#fd8d3c", "#fecc5c", "#ffffb2")) %>% 
+#     add_bars() %>% 
+#     layout(xaxis = list(title = "Weekdays"),
+#              yaxis = list(title = "Rating Proportion"),
+#              barmode = "stack",
+#            plot_bgcolor= toRGB("gray92"),
+#   
+#   annotations1 = list( 
+# 
+#   list( 
+#     x = -0.6,  
+#     y = 1.0,  
+#     text = "a) Total Rating reviews per weekday",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "center",  
+#     yanchor = "bottom",  
+#     showarrow = FALSE 
+#   ),  
+#   list( 
+#     x = 0.5,  
+#     y = 1,  
+#     text = "b) Rating Distribution per weekday",  
+#     xref = "paper",  
+#     yref = "paper",  
+#     xanchor = "center",  
+#     yanchor = "bottom",  
+#     showarrow = FALSE 
+#   )))
+# 
+#   
+#  subplot(p.b, p.c) |>
+#     layout(annotations1 = annotations,
+#            showlegend=FALSE)
+
 ```
 <font size="3">**Figure 5.** a) Rating Histogram per weekday and b) Rating distribution per weekday.</font>
 
@@ -414,7 +475,7 @@ Upon a yearly breakdown of the data, a consistent pattern emerges where more rev
 Notably, in the year 2022, those same days (Thursdays and Fridays) experienced higher star ratings, with 50% of customers rating the establishment either with 5 or 4 stars. However, in the subsequent year, this proportion decreased to 20-33% (4 and 5 stars), while the proportion of 1-2 stars (combined) increased to 33-40% for these same days(Thursdays and Fridays). On the other hand, in 2023 the percentage of lower ratings decreased not only for weekends, but also for Mondays Tuesdays, compared to year 2022 (figure 6b). 
 
 
-```{r, figure6, message=FALSE, fig.fullwidth = TRUE, out.width="100%", echo=FALSE}
+```{r, figure6, message=FALSE, out.width="100%", echo=FALSE}
 # frequency histograms by weekdays facet by year
   h1 <- df_SOB %>%
     filter(Year != 2024) %>% 
@@ -430,7 +491,8 @@ Notably, in the year 2022, those same days (Thursdays and Fridays) experienced h
           panel.grid.minor = element_blank(),
           axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
     labs(y= "Review numbers", x= "Weekday", fill= "Rating") +
-    theme(strip.text = element_text(face = "bold", color = "black"),
+    theme(legend.position="none",
+          strip.text = element_text(face = "bold", color = "black"),
           strip.background = element_rect(linetype = "solid",
                                           color = "gray", linewidth = 1),
           panel.background = element_rect(fill = 'gray92', color = 'gray'))
@@ -453,11 +515,12 @@ h2 <- df_SOB %>%
                                           color = "gray", linewidth = 1),
           panel.background = element_rect(fill = 'gray92', color = 'gray'))
 
+h1+ h2 & plot_annotation(tag_levels = 'A')
 
-h11 <- ggplotly(h1)
-h22 <- ggplotly(h2)
-subplot(h11, h22)|>
-    layout(showlegend=FALSE)
+# h11 <- ggplotly(h1)
+# h22 <- ggplotly(h2)
+# subplot(h11, h22)|>
+#     layout(showlegend=FALSE)
 
 ```
 <font size="3">**Figure 6.** a) Rating Histogram per weekday and b) Rating proportion distribution per weekday.</font>
@@ -604,7 +667,7 @@ ggplotly(f11, tooltip = "text")
 ```
 <font size="3">**Figure 11.** Customers reviews per State.</font>
     
-```{r figure12, message=FALSE, warning=FALSE, echo=FALSE}
+```{r figure12, fig.fullwidth = TRUE, out.width="100%", message=FALSE, warning=FALSE, echo=FALSE}
 f12<-df_SOB %>% 
   ggplot(aes(x=rating, y= State, color= rating_f)) +
   geom_point(position = "jitter") +

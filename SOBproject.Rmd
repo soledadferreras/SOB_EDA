@@ -408,7 +408,7 @@ f5a<- df_SOB %>%
             panel.grid.minor = element_blank(),
             axis.text.x = element_text(size = 8)) +
       scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
-      labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") +
+      labs(y= "Rating distribution", x= "Weekday", fill= "Rating\n(Stars)") +
       theme(strip.text = element_text(face = "bold", color = "black"),
             strip.background = element_rect(fill = "gray90", linetype = "solid",
                                             color = "gray", linewidth = 1))
@@ -530,7 +530,8 @@ h1+ h2 & plot_annotation(tag_levels = 'A')
 
 To determine actionable steps for improving the overall rating trend, the focus will be on the last two years: 2022 and 2023. When examining the data by months, standout months in 2023 with excellent customer evaluations of 5 stars (ranging from 50% to 100% of customers) include June, October, March, December, and January. While all these months improved the rating compared to 2022, January witnessed a decrease in the percentage of 5-star ratings.
 
-In January, April, August, and November of 2023, there was a noticeable rise in the percentage of lower star ratings (1 and 2 stars). Particularly, April emerged as a month with high number of negative reviews in both years. In contrast, May, June, and September witnessed a significant improvement in customer ratings, with none of the clients providing a negative review.
+In January, April, August, and November of 2023, there was a noticeable rise in the percentage of lower star ratings (1 and 2 stars). Particularly, April emerged as a month with high number of negative reviews in both years. Upon examining customer comments more closely, we identified five reviews with low ratings (1 or 2 stars). Three of these complaints were related to meal quality, one addressed noise disturbance from non-customers in the establishment, and the last one concerned an error in the menu. Therefore, it can be inferred that employee service was not a contributing factor.
+In contrast, May, June, and September witnessed a significant improvement in customer ratings, with none of the clients providing a negative review.
 
 In 2023, Mondays and Tuesdays exhibited a noteworthy enhancement in customer ratings, with 50% of clients awarding either 4 or 5 stars, marking a significant increase from the previous year. Conversely, a reversal in this trend was observed for Thursdays and Fridays. Notably, these days see a higher frequency of customer reviews on Yelp, suggesting potential areas for improvement. Lastly, Saturdays and Sundays also displayed improvements compared to 2022.
 :::
@@ -667,12 +668,12 @@ ggplotly(f11, tooltip = "text")
 ```
 <font size="3">**Figure 11.** Customers reviews per State.</font>
     
-```{r figure12, fig.fullwidth = TRUE, out.width="100%", message=FALSE, warning=FALSE, echo=FALSE}
+```{r figure12, message=FALSE, warning=FALSE, echo=FALSE}
 f12<-df_SOB %>% 
   ggplot(aes(x=rating, y= State, color= rating_f)) +
   geom_point(position = "jitter") +
   scale_color_brewer(palette = "YlOrRd") +
-  coord_flip() +
+  # coord_flip() +
   theme_minimal() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor = element_blank(),
@@ -682,6 +683,43 @@ ggplotly(f12) %>%
 
 ```
 <font size="3">**Figure 12.** Users interactions with customers reviews.</font>    
+
+```{r fig.margin = TRUE, fig.cap = "Figure 13. Sentiment Analysis for Low-Rating Months in 2023.", fig.width=3.5, fig.height=3.5, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+negMonth <- c(1, 4, 8, 11)
+comment_sentiments %>% 
+  filter(Year == 2023) %>% 
+  filter(Month %in% negMonth) %>% 
+  ggplot(aes(factor(Month), SentimentGI, color= sentiment_category)) +
+  geom_point(position = "jitter")+
+  scale_color_manual(values = c("Positive" = "#165D43FF", "Neutral" = "#E9851DFF", "Negative" = "#BF3626FF"), breaks=c('Positive', 'Neutral', 'Negative')) +
+  theme_minimal() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(y= "SentimentGI", x= "Month", color= "Sentiment\ncategory")
+```
+
+## **Conclusion**
+
+In conclusion, the restaurant has consistently received high ratings from Yelp users since its inception, consistently averaging between 4 to 5 stars. Although there has been a slight decline in star ratings over the years, the overall rating remains very good.
+
+Upon closer examination of the data from the past year, January, April, August, and November emerge as months with lower customer ratings. However, during these months, only a small number of customers—20 in total—shared their opinions on Yelp, with only a quarter of them rating the restaurant with 1 or 2 stars. Further analysis of the posted comments for these months revealed a predominantly positive sentiment, as depicted in Figure 13. Notably, only three of these comments expressed disappointment with meal quality, and only one mentioned a service error.
+
+When analyzing weekdays, improvements were observed in several days in 2023 compared to the previous year (Mondays, Tuesdays, Saturdays, and Sundays). However, ratings for Thursdays and Fridays saw a decrease from 4.77 to 3.81 stars (2022 - 2023). These days also coincided with a high frequency of customer posts on Yelp, suggesting a need for corrective actions to reverse this trend.
+
+Furthermore, sentiment analysis revealed an overall positive sentiment towards the language used by customers in their reviews. The most frequently occurring words were "good," "great," and "friendly," indicating that customers appreciated not only the food but also the friendly service. User interactions on Yelp were more frequent for posts with higher ratings (4 and 5 stars), with "useful" and "cool" being the most clicked.
+
+Considering user locations, local users were the most frequent, followed by customers from California and Florida. However, no discernible pattern was observed regarding ratings based on customer location.
+
+
+
+
+
+
+
+
+
+
+
 
 
     

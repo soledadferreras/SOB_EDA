@@ -8,7 +8,7 @@ library(RColorBrewer)
 library(readr)
 
 
-file_SOB<-"C:\\Users\\chole\\Documents\\documentos personales\\educacion\\R\\Web scraping\\SOB Yelp Review.csv"
+file_SOB<-"C:\\Users\\chole\\Documents\\documentos personales\\educacion\\R\\Web scraping\\SOB\\SOB Yelp Review.csv"
 
 
 df_SOB <- read.csv(file_SOB)
@@ -232,7 +232,7 @@ df_SOB %>%
   count(rating_f) %>% 
   summarize(total_reviews= sum(n)) %>% 
   ggplot(aes(x = factor(Month), y = total_reviews, fill= factor(rating))) +
-  geom_col() + #color = "#f48d07",
+  geom_bar() + #color = "#f48d07",
   scale_fill_brewer(palette = "YlOrRd") +        #lwd = 1, fill = "#e4f407") +
   ylim(0, 45) +
   theme_minimal() +
@@ -285,6 +285,7 @@ df_SOB %>%
     filter(Year != 2024) %>% 
     group_by(Year, WeekDay_f) %>%
     count(rating_f) %>% 
+    
     ggplot(aes(x=WeekDay_f, y=n, fill= rating_f)) +
     #geom_point()+
     geom_col(position= "dodge")+
@@ -329,22 +330,35 @@ df_SOB %>%
             colors =  "YlOrRd") %>% 
     add_bars() %>% 
     layout(xaxis = list(title = "Weekdays"),
-           yaxis = list(title = "Rating conts"),
-           barmode = "dodge",
+           yaxis = list(title = "Rating counts"),
+           barmode = "stack",
            plot_bgcolor= toRGB("gray92")) 
   
+  f3a <-  df_SOB %>%
+    filter(Year != 2024) %>% 
+    group_by(Month, rating_f) %>% 
+    count(rating_f) %>% 
+    summarize(total_reviews= sum(n)) %>% 
+    ggplot(aes(x = factor(Month), y = total_reviews, fill= rating_f)) +
+    geom_col() +
+    scale_fill_brewer(palette = "YlOrRd") +
+    theme_minimal() +
+    theme(legend.position="none",
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor = element_blank()) +
+    labs(y= "Reviews counts", x= "Month", fill= "Rating\n(Stars)")
   #Summerize ggplot
   df_SOB %>%
     filter(Year != 2024) %>% 
-    group_by(WeekDay_f) %>% 
+    group_by(WeekDay_f, rating_f) %>% 
     count(rating_f) %>% 
     summarize(total_reviews= sum(n)) %>% 
-    ggplot(aes(x = WeekDay_f, y = total_reviews)) +
-    geom_col(color = "#f48d07",
-             lwd = 1, fill = "#e4f407") +
-    ylim(0, 60) +
+    ggplot(aes(x = WeekDay_f, y = total_reviews, fill= rating_f)) +
+    geom_col() +
+    scale_fill_brewer(palette = "YlOrRd") +
     theme_minimal() +
-    theme(panel.grid.major.x = element_blank(),
+    theme(legend.position="none",
+      panel.grid.major.x = element_blank(),
           panel.grid.minor = element_blank()) +
     labs(y= "Reviews counts", x= "Weekday")
   
@@ -365,6 +379,23 @@ df_SOB %>%
            plot_bgcolor= toRGB("gray92"))
   
   #Weekday proportions
+    df_SOB %>% filter(Year != 2024) %>%
+      group_by(WeekDay_f) %>% 
+      ggplot(aes(x= WeekDay_f, fill = factor(rating))) +
+      geom_bar(position= "fill") +
+      scale_fill_brewer(palette = "YlOrRd") +
+      scale_y_continuous(breaks = c(0, 5, 10, 15, 20, 25)) +
+      theme_minimal() +
+      theme(panel.grid.major.x = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(size = 8)) +
+      scale_y_continuous(breaks = c(0, 0.20, 0.40, 0.60, 0.80,1.00)) +
+      labs(y= "Rating distribution", x= "Month", fill= "Rating\n(Stars)") +
+      theme(strip.text = element_text(face = "bold", color = "black"),
+            strip.background = element_rect(fill = "gray90", linetype = "solid",
+                                            color = "gray", linewidth = 1))
+    f3a+f3b  & plot_annotation(tag_levels = 'A')
+    
   df_SOB %>%
     filter(Year != 2024) %>% 
     group_by(WeekDay_f) %>% 
@@ -652,7 +683,13 @@ comment_sentiments <- full_df_SOB %>%
 comment_sentiments<-comment_sentiments %>% 
   mutate(sentiment_category= as.factor(sentiment_category))
 str(comment_sentiments)
-
+#Negative rating month vs SentimentGI
+negMonth <- c("January", "April", "August","November")
+comment_sentiments %>% 
+  # filter(Year == 2023) %>% 
+  filter(Month %in% negMonth) %>% 
+  ggplot(aes(Month, SentimentGI)) +
+  geom_point()
 
 #Histogram
 
@@ -700,6 +737,12 @@ df_SOB_c <- df_SOB_c %>%
     sentiment_score == 0 ~ "neutral",
     sentiment_score < 0 ~ "negative"
   ))
+#Negative rating month vs SentimentGI
+negMonth <- c("January", "April", "August","November")
+df_SOB_c %>% 
+  filter(Year == 2023, Month%in%negMonth) %>% 
+  ggplot(aes())
+
 # Identify frequent keywords in positive and negative reviews
 positive_keywords <- df_SOB_c %>%
   filter(sentiment_category == "positive") %>%
